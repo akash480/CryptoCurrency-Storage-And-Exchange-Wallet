@@ -1,0 +1,6 @@
+<h2>Your Wallet</h2>
+<p>BTC Balance: {{ wallet.btc_balance }} (USD: ${{ btc_value | round(2) }})</p>
+<p>ETH Balance: {{ wallet.eth_balance }} (USD: ${{ eth_value | round(2) }})</p>
+<p>BTC Rate: ${{ btc_usd }}</p>
+<p>ETH Rate: ${{ eth_usd }}</p>
+<a href="/logout">Logout</a>

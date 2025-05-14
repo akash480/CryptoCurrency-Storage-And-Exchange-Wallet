@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h2 class="fw-bold">
+            <i class="fas fa-wallet me-2"></i>Your Crypto Portfolio
+        </h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCryptoModal">
+            <i class="fas fa-plus me-2"></i>Add New Crypto
+        </button>
+        <div class="btn-group ms-2">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-exchange-alt me-2"></i>{{ fiat_currency }}
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('dashboard', fiat='USD') }}">USD</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('dashboard', fiat='EUR') }}">EUR</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('dashboard', fiat='INR') }}">INR</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="row">
+            {% for wallet in wallets %}
+            <div class="col-md-6 mb-4">
+                <div class="card crypto-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0 fw-bold">
+                                <i class="fas fa-coins me-2"></i>{{ wallet.symbol }}
+                            </h5>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateBalanceModal" 
+                                    data-wallet-id="{{ wallet.id }}" data-symbol="{{ wallet.symbol }}">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="text-muted mb-1">Balance</p>
+                                <h6 class="fw-bold">{{ "%.8f"|format(wallet.balance) }}</h6>
+                            </div>
+                            <div class="col-6">
+                                <p class="text-muted mb-1">Value</p>
+                                <h6 class="fw-bold">
+                                    {% if wallet.fiat_value > 0 %}
+                                        {{ fiat_currency }} {{ "%.2f"|format(wallet.fiat_value) }}
+                                    {% else %}
+                                        <span class="text-muted">Rate unavailable</span>
+                                    {% endif %}
+                                </h6>
+                            </div>
+                        </div>
+                        {% if wallet.rate %}
+                        <div class="mt-3">
+                            <p class="text-muted mb-1">Current Rate</p>
+                            <h6 class="fw-bold">{{ fiat_currency }} {{ "%.2f"|format(wallet.rate) }}</h6>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">
+                    <i class="fas fa-chart-pie me-2"></i>Portfolio Summary
+                </h5>
+                <div class="text-center mb-4">
+                    <div class="portfolio-value">{{ fiat_currency }} {{ "%.2f"|format(total_value) }}</div>
+                    <p class="text-muted">Total Portfolio Value</p>
+                </div>
+                <div class="chart-container" id="portfolioChart"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Crypto Modal -->
+<div class="modal fade" id="addCryptoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-plus-circle me-2"></i>Add New Cryptocurrency
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_crypto') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="symbol" class="form-label fw-bold">Cryptocurrency Symbol</label>
+                        <select class="form-select" id="symbol" name="symbol" required>
+                            <option value="">Select a cryptocurrency</option>
+                            <option value="BTC">Bitcoin (BTC)</option>
+                            <option value="ETH">Ethereum (ETH)</option>
+                            <option value="DOGE">Dogecoin (DOGE)</option>
+                            <option value="LTC">Litecoin (LTC)</option>
+                            <option value="XRP">Ripple (XRP)</option>
+                            <option value="ADA">Cardano (ADA)</option>
+                            <option value="DOT">Polkadot (DOT)</option>
+                            <option value="SOL">Solana (SOL)</option>
+                            <option value="BNB">Binance Coin (BNB)</option>
+                            <option value="USDT">Tether (USDT)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label fw-bold">Initial Amount</label>
+                        <input type="number" class="form-control" id="amount" name="amount" step="any" 
+                               placeholder="0.0" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Crypto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Update Balance Modal -->
+<div class="modal fade" id="updateBalanceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Update Balance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_balance') }}">
+                <input type="hidden" name="wallet_id" id="updateWalletId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="type" class="form-label fw-bold">Transaction Type</label>
+                        <select class="form-select" id="type" name="type" required>
+                            <option value="deposit">Deposit</option>
+                            <option value="withdraw">Withdraw</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label fw-bold">Amount</label>
+                        <input type="number" class="form-control" id="updateAmount" name="amount" 
+                               step="any" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Portfolio chart data
+    const walletData = JSON.parse('{{ wallets|tojson|safe }}');
+    const validWallets = walletData.filter(w => w.fiat_value > 0);
+    
+    if (validWallets.length > 0) {
+        // Define specific colors for each cryptocurrency
+        const cryptoColors = {
+            'BTC': '#F7931A',  // Bitcoin Orange
+            'ETH': '#627EEA',  // Ethereum Blue
+            'DOGE': '#C3A634', // Dogecoin Gold
+            'LTC': '#345D9D',  // Litecoin Blue
+            'XRP': '#23292F',  // Ripple Black
+            'ADA': '#0033AD',  // Cardano Blue
+            'DOT': '#E6007A',  // Polkadot Pink
+            'SOL': '#00FFA3',  // Solana Green
+            'BNB': '#F3BA2F',  // Binance Yellow
+            'USDT': '#26A17B'  // Tether Green
+        };
+
+        // Map wallet symbols to their specific colors
+        const colors = validWallets.map(w => cryptoColors[w.symbol] || '#6366f1');
+        
+        const isDarkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const textColor = isDarkMode ? '#e9ecef' : '#1e293b';
+        const bgColor = isDarkMode ? '#2d3238' : '#ffffff';
+        const borderColor = isDarkMode ? '#3d4248' : '#e2e8f0';
+        
+        const data = [{
+            values: validWallets.map(w => w.fiat_value),
+            labels: validWallets.map(w => w.symbol),
+            type: 'pie',
+            textinfo: 'label+percent',
+            insidetextorientation: 'radial',
+            marker: {
+                colors: colors,
+                line: {
+                    color: borderColor,
+                    width: 2
+                }
+            },
+            hoverlabel: {
+                font: {
+                    family: 'Inter, sans-serif',
+                    size: 14
+                },
+                bgcolor: bgColor,
+                bordercolor: borderColor
+            },
+            textfont: {
+                family: 'Inter, sans-serif',
+                size: 14,
+                color: textColor
+            }
+        }];
+        
+        const layout = {
+            height: 350,
+            margin: { t: 20, b: 20, l: 20, r: 20 },
+            showlegend: true,
+            legend: {
+                font: {
+                    family: 'Inter, sans-serif',
+                    size: 12,
+                    color: textColor
+                },
+                orientation: 'h',
+                y: -0.1
+            },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            hovermode: 'closest',
+            uniformtext: {
+                minsize: 12,
+                mode: 'hide'
+            }
+        };
+        
+        const config = {
+            responsive: true,
+            displayModeBar: false
+        };
+        
+        Plotly.newPlot('portfolioChart', data, layout, config);
+
+        // Update chart when theme changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'data-bs-theme') {
+                    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                    const newTextColor = isDark ? '#e9ecef' : '#1e293b';
+                    const newBgColor = isDark ? '#2d3238' : '#ffffff';
+                    const newBorderColor = isDark ? '#3d4248' : '#e2e8f0';
+                    
+                    Plotly.relayout('portfolioChart', {
+                        'legend.font.color': newTextColor,
+                        'textfont.color': newTextColor,
+                        'hoverlabel.bgcolor': newBgColor,
+                        'hoverlabel.bordercolor': newBorderColor,
+                        'marker.line.color': newBorderColor
+                    });
+                }
+            });
+        });
+
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-bs-theme']
+        });
+    } else {
+        document.getElementById('portfolioChart').innerHTML = 
+            '<div class="text-center text-muted p-4">No valid data for chart</div>';
+    }
+
+    // Update balance modal handler
+    const updateBalanceModal = document.getElementById('updateBalanceModal');
+    updateBalanceModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const walletId = button.getAttribute('data-wallet-id');
+        const symbol = button.getAttribute('data-symbol');
+        
+        updateBalanceModal.querySelector('.modal-title').textContent = `Update ${symbol} Balance`;
+        updateBalanceModal.querySelector('#updateWalletId').value = walletId;
+    });
+});
+</script>
+{% endblock %}

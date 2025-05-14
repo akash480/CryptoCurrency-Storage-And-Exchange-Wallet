@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-chart-line me-2"></i>Profit/Loss Analysis</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Profit/Loss</h5>
+                <h3 class="{% if total_profit_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ fiat_currency }} {{ "%.2f"|format(total_profit_loss) }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Cryptocurrency</th>
+                        <th>Initial Investment</th>
+                        <th>Withdrawals</th>
+                        <th>Current Balance</th>
+                        <th>Profit/Loss</th>
+                        <th>Profit/Loss %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in profit_loss_data %}
+                    <tr>
+                        <td>
+                            <i class="fas fa-coins me-2"></i>{{ data.symbol }}
+                        </td>
+                        <td>{{ fiat_currency }} {{ "%.2f"|format(data.initial_investment) }}</td>
+                        <td>{{ fiat_currency }} {{ "%.2f"|format(data.withdrawals) }}</td>
+                        <td>{{ fiat_currency }} {{ "%.2f"|format(data.current_balance) }}</td>
+                        <td class="{% if data.profit_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ fiat_currency }} {{ "%.2f"|format(data.profit_loss) }}
+                        </td>
+                        <td class="{% if data.profit_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ "%.2f"|format(data.profit_loss_percentage) }}%
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="fas fa-info-circle me-2"></i>No data available
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

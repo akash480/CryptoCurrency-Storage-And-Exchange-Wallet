@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2><i class="fas fa-exchange-alt me-2"></i>Transaction History</h2>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Cryptocurrency</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <i class="fas fa-coins me-2"></i>{{ transaction.wallet.crypto_symbol }}
+                        </td>
+                        <td>
+                            <span class="badge {% if transaction.transaction_type == 'deposit' %}bg-success{% else %}bg-danger{% endif %} transaction-badge">
+                                <i class="fas {% if transaction.transaction_type == 'deposit' %}fa-arrow-down{% else %}fa-arrow-up{% endif %} me-1"></i>
+                                {{ transaction.transaction_type|title }}
+                            </span>
+                        </td>
+                        <td>{{ "%.8f"|format(transaction.amount) }}</td>
+                        <td>
+                            {% if transaction.fiat_value %}
+                                <span class="text-muted">{{ transaction.fiat_currency }}</span>
+                                {{ "%.2f"|format(transaction.fiat_value) }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">
+                            <i class="fas fa-info-circle me-2"></i>No transactions found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 
